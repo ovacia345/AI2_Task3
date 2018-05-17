@@ -10,35 +10,32 @@ class VariableElimination():
 
     def __init__(self, network):
         self.network = network
+        self.network.values = {node: sorted(self.network.values[node]) for node in self.network.values}
+
         self.addition_steps =  0
         self.multiplication_steps = 0
 
-        self.factors = np.array([])
-
     def run(self, query, observed, elim_order):
-        netProbs = self.network.probabilities
-        netValues = self.network.values
-        self.network.values = {node: sorted(netValues[node]) for node in netValues}
+        factors = np.array([])
+        for node in self.network.nodes:
+            factor = self.makeFactor(node, observed)
+            if factor.nr_nodes > 0:
+                factors = np.append(factors, factor)
 
-        for variable in self.network.nodes:
-            factor = self.makeFactor(variable, observed)
-            if factor.nrNodes > 0:
-                self.factors = np.append(self.factors, factor)
+        for node in elim_order:
+            idx = [i for i, factor in enumerate(factors) if node in factor.nodes]
+            if node != elim_order[0]:
+                idx = np.unique(idx + [factors.size - 1])
 
-        for variable in elim_order:
-            idx = np.array([i for i, factor in enumerate(self.factors) if variable in factor.nodes])
-            if variable != elim_order[0]:
-                idx = np.unique(np.append(idx, np.array([len(self.factors) - 1])))
-            variableFactors = self.factors[idx]
-            for i in xrange(len(variableFactors) - 1):
-                product = variableFactors[i].times(variableFactors[i + 1])
-                variableFactors[i + 1] = product
+            node_factors = factors[idx]
+            for i in xrange(node_factors.size - 1):
+                product = node_factors[i].times(node_factors[i + 1])
+                node_factors[i + 1] = product
 
-            marginalization = variableFactors[-1].marginalize(variable)
+            marginalization = node_factors[-1].marginalize(node)
 
-            self.factors = np.append(self.factors, 1)
-            self.factors[-1] = marginalization
-            self.factors = np.delete(self.factors, idx)
+            factors = np.append(factors, marginalization)
+            factors = np.delete(factors, idx)
         print
         print "Result:"
         print self.factors[0].nodes
@@ -62,23 +59,24 @@ class VariableElimination():
     def makeFactor(self, variable, observed):
         nodes = np.array([variable] + self.network.parents[variable])
         probs = self.network.probabilities[variable].values
-        factor = Factor(nodes, probs, self.network)
-        if np.any(np.in1d(nodes, observed.keys())):
-            if len(nodes) > np.sum(np.in1d(nodes, observed.keys())):
-                factor.reduce(observed)
-                return factor
+
+        nodes_in_observed = nodes[np.flatnonzero(np.in1d(nodes, observed.keys()))]
+        if nodes_in_observed.size > 0:
+            if nodes.size > nodes_in_observed.size:
+                factor = Factor(nodes, probs, self.network)
+                return factor.reduce(nodes_in_observed)
             else:
-                return Factor([], [], None)
+                return Factor()
         else:
-            return factor
+            return Factor(nodes, probs, self.network)
 
 
 
 class Factor():
 
-    def __init__(self, nodes, probs, network):
+    def __init__(self, nodes=np.array([]), probs=np.array([]), network=None):
         self.nodes = nodes
-        self.nrNodes = len(self.nodes)
+        self.nr_nodes = self.nodes.size
 
         self.probs = probs
 
@@ -137,7 +135,7 @@ class Factor():
             self.probs = self.probs[bounds[0] : bounds[1], 1:]
 
         self.nodes = self.nodes[len(keys):]
-        self.nrNodes -= len(keys)
+        self.nr_nodes -= len(keys)
 
     def sort(self, variables):
         variable_columns_indices = np.flatnonzero(np.in1d(self.nodes, variables))
@@ -147,10 +145,10 @@ class Factor():
                 self.nodes[[i, index]] = self.nodes[[index, i]]
                 self.probs[:, [i, index]] = self.probs[:, [index, i]]
 
-        dtype = [(str(i), 'S10') for i in xrange(self.nrNodes)] + [('value', np.float)]
+        dtype = [(str(i), 'S10') for i in xrange(self.nr_nodes)] + [('value', np.float)]
         self.probs = np.array(map(tuple, self.probs), dtype = dtype)
 
-        self.probs = np.sort(self.probs, order = map(str, xrange(self.nrNodes)))
+        self.probs = np.sort(self.probs, order = map(str, xrange(self.nr_nodes)))
 
         self.probs = np.array(map(list, self.probs))
 
