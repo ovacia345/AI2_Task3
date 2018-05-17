@@ -10,7 +10,7 @@ from variable_elim import *
 if __name__ == '__main__':
     # the class BayesNet represents a Bayesian network from a .bif file
     # in several variables
-    net = BayesNet('earthquake.bif') 
+    net = BayesNet('knowledgeClip.bif')
     
     # these are the variables that should be used for variable elimination
     print 'values', net.values 
@@ -24,15 +24,13 @@ if __name__ == '__main__':
     ve = VariableElimination(net)
 
     # If variables are known beforehand, you can represent them in the following way: 
-    evidence = {'Burglary': 'True'}
+    evidence = {}
 
     # determine you heuristics before you call the run function. This can be done in this file or in a seperate file
     # The heuristics either specifying the elimination ordering (list) or it is a function that determines the elimination ordering
     # given the network. An simple example is:
-    query = 'Alarm'
-    elim_order = net.nodes
-    elim_order.remove(query)
-    elim_order.remove(evidence.keys()[0])
+    query = ['E']
+    elim_order = ['D', 'F', 'A', 'B', 'C']
 
 	#call the elimination ordering function for example as follows:   
     ve.run(query, evidence, elim_order)
