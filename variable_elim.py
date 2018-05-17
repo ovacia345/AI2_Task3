@@ -15,6 +15,7 @@ class VariableElimination():
         self.addition_steps =  0
         self.multiplication_steps = 0
 
+    ## Finished
     def run(self, query, observed, elim_order):
         factors = np.array([])
         for node in self.network.nodes:
@@ -23,11 +24,9 @@ class VariableElimination():
                 factors = np.append(factors, factor)
 
         for node in elim_order:
-            idx = [i for i, factor in enumerate(factors) if node in factor.nodes]
-            if node != elim_order[0]:
-                idx = np.unique(idx + [factors.size - 1])
+            node_factors_indices = [i for i, factor in enumerate(factors) if node in factor.nodes]
 
-            node_factors = factors[idx]
+            node_factors = factors[node_factors_indices]
             for i in xrange(node_factors.size - 1):
                 product = node_factors[i].times(node_factors[i + 1])
                 node_factors[i + 1] = product
@@ -35,11 +34,13 @@ class VariableElimination():
             marginalization = node_factors[-1].marginalize(node)
 
             factors = np.append(factors, marginalization)
-            factors = np.delete(factors, idx)
+            factors = np.delete(factors, node_factors_indices)
+
         print
         print "Result:"
-        print self.factors[0].nodes
-        print self.factors[0].probs
+        print factors[0].nodes
+        print factors[0].probs
+
         """
         Use the variable elimination algorithm to find out the probability
         distribution of the query variable given the observed variables
@@ -56,6 +57,7 @@ class VariableElimination():
 
         """
 
+    ## Finished
     def makeFactor(self, variable, observed):
         nodes = np.array([variable] + self.network.parents[variable])
         probs = self.network.probabilities[variable].values
@@ -74,7 +76,7 @@ class VariableElimination():
 
 class Factor():
 
-    def __init__(self, nodes=np.array([]), probs=np.array([]), network=None):
+    def __init__(self, nodes=np.array([]), probs = np.array([]), network = None):
         self.nodes = nodes
         self.nr_nodes = self.nodes.size
 
@@ -82,40 +84,37 @@ class Factor():
 
         self.network = network
 
+    ## Finished
     def times(self, factor):
         common_variables = np.intersect1d(self.nodes, factor.nodes)
         nr_common_variables = len(common_variables)
         nr_common_variables_values_combinations = np.prod([len(self.network.values[common_variable]) for common_variable in common_variables])
 
-
         self.sort(common_variables)
         factor.sort(common_variables)
 
-
         nodes = np.append(self.nodes, factor.nodes[nr_common_variables:])
-
 
         products1 = self.probs_with_equal_common_variables(nr_common_variables_values_combinations)
         products2 = factor.probs_with_equal_common_variables(nr_common_variables_values_combinations)
-
-        products = np.hstack([[products1[i, e] * products2[i] for i in xrange(len(products1))]
-                              for e in xrange(len(products1[0]))]).reshape((-1, 1))
+        products = [[products1[i, e] * products2[i] for e in xrange(len(products1[0]))] for i in xrange(len(products1))]
+        products = np.vstack([product.reshape((-1, 1)) for value_products in products for product in value_products])
 
         probs = get_probs(self, factor, products, nr_common_variables, nodes)
 
-
         return Factor(nodes, probs, self.network)
 
+    ## Finished
     def marginalize(self, variable):
         self.sort([variable])
         nr_values = len(self.network.values[variable])
-        nr_times_values_in_column = len(self.probs) / nr_values
+        nr_equal_values_in_column = len(self.probs) / nr_values
 
-        indices_list = [[i * nr_times_values_in_column + e for i in xrange(nr_values)] for e in xrange(nr_times_values_in_column)]
+        indices_list = [[i * nr_equal_values_in_column + e for i in xrange(nr_values)] for e in xrange(nr_equal_values_in_column)]
         sums = np.array([self.probs[indices, -1] for indices in indices_list]).astype(np.float)
         sums = np.sum(sums, axis = 1).reshape((-1, 1))
 
-        values = self.probs[:len(self.probs) / nr_values, 1:-1]
+        values = self.probs[:nr_equal_values_in_column, 1:-1]
 
         probs = np.hstack((values, sums))
 
@@ -137,6 +136,7 @@ class Factor():
         self.nodes = self.nodes[len(keys):]
         self.nr_nodes -= len(keys)
 
+    ## Finished
     def sort(self, variables):
         variable_columns_indices = np.flatnonzero(np.in1d(self.nodes, variables))
 
@@ -145,28 +145,27 @@ class Factor():
                 self.nodes[[i, index]] = self.nodes[[index, i]]
                 self.probs[:, [i, index]] = self.probs[:, [index, i]]
 
-        dtype = [(str(i), 'S10') for i in xrange(self.nr_nodes)] + [('value', np.float)]
+        dtype = [(str(i), 'S10') for i in xrange(self.nr_nodes + 1)]
         self.probs = np.array(map(tuple, self.probs), dtype = dtype)
 
         self.probs = np.sort(self.probs, order = map(str, xrange(self.nr_nodes)))
 
         self.probs = np.array(map(list, self.probs))
 
+    ## Finished
     def probs_with_equal_common_variables(self, nr_common_variables_values_combinations):
-        nr_rows_in_set_rows = len(self.probs) / nr_common_variables_values_combinations
-        bounds_list = [[i * nr_rows_in_set_rows, (i + 1) * nr_rows_in_set_rows] for i in
+        nr_equal_common_variables_values_in_columns = len(self.probs) / nr_common_variables_values_combinations
+        bounds_list = [[i * nr_equal_common_variables_values_in_columns, (i + 1) * nr_equal_common_variables_values_in_columns] for i in
                        xrange(nr_common_variables_values_combinations)]
         return np.array([self.probs[bounds[0] : bounds[1], -1] for bounds in bounds_list]).astype(np.float)
 
-
+    ## Finished
 def get_probs(factor1, factor2, products, nr_common_variables, nodes):
-    values1 = factor1.probs[:, :-1]
-    values2 = factor2.probs[:, nr_common_variables:-1]
+    values1 = factor1.probs[:, :-1] # Includes common_variables columns
+    values2 = factor2.probs[:, nr_common_variables:-1] # Excludes common_variables columns
 
     if values1[:, nr_common_variables:].size != 0 and values2.size != 0:
-        nr_rows = 1
-        for node in nodes:
-            nr_rows *= len(factor1.network.values[node])
+        nr_rows = np.prod([len(factor1.network.values[node] for node in nodes)])
 
         probs = [np.repeat(values1, nr_rows / len(values1), axis=0)]
         probs += [np.tile(values2.T, nr_rows / len(values2)).T]
@@ -175,6 +174,8 @@ def get_probs(factor1, factor2, products, nr_common_variables, nodes):
     elif values2.size != 0:
         probs = [np.repeat(values1, len(values2) / len(values1), axis=0)]
         probs += [values2]
+    else:
+        probs = [values1]
     probs += [products]
 
     return np.hstack(probs)
