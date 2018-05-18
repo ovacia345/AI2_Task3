@@ -17,7 +17,7 @@ class VariableElimination():
     def run(self, query, observed, elim_order):
         factors = np.array([])
         for node in self.network.nodes:
-            factor = self.makeFactor(node, observed)
+            factor = self._makeFactor(node, observed)
             if factor.nr_nodes > 0:
                 factors = np.append(factors, factor)
 
@@ -36,7 +36,7 @@ class VariableElimination():
 
         return result.normalize()
 
-    def makeFactor(self, node, observed):
+    def _makeFactor(self, node, observed):
         nodes = np.array([node] + self.network.parents[node])
         probs = self.network.probabilities[node].values
 

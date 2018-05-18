@@ -1,3 +1,5 @@
+import numpy as np
+
 class Factor():
 
     def __init__(self, nodes = np.array([]), probs = np.array([]), network = None):
@@ -36,6 +38,28 @@ class Factor():
         return np.hstack(probs)
 
 
+    ## TODO
+    def reduce(self, observed, nodes_in_observed):
+        self.sort(nodes_in_observed)
+
+        nodes_in_observed = [(node, observed[node]) for node in nodes_in_observed]
+        nodes_in_observed_values_data = [(self.network.values[node].index(value), len(self.network.values[node]))
+                                         for node, value in nodes_in_observed]
+
+        nr_rows = len(self.probs)
+        bounds = [0, nr_rows]
+        for index, nr_values in nodes_in_observed_values_data:
+            nr_equal_values_in_column = nr_rows / nr_values
+            bounds[0] += index * nr_equal_values_in_column
+            bounds[1] -= (nr_values - index - 1) * nr_equal_values_in_column
+            nr_rows /= nr_values
+
+        probs = self.probs[bounds[0]: bounds[1], len(nodes_in_observed):]
+
+        nodes = self.nodes[len(nodes_in_observed):]
+
+        return Factor(nodes, probs, self.network)
+
     def times(self, factor):
         common_nodes = np.intersect1d(self.nodes, factor.nodes)
         nr_common_nodes = common_nodes.size
@@ -70,27 +94,14 @@ class Factor():
 
         return Factor(self.nodes[1:], probs, self.network)
 
-    ## TODO
-    def reduce(self, observed, nodes_in_observed):
-        self.sort(nodes_in_observed)
+    def normalize(self):
+        prob_column = self.probs[:,-1].astype(np.float).reshape((-1, 1))
+        prob_column = prob_column / np.sum(prob_column)
 
-        nodes_in_observed = [(node, observed[node]) for node in nodes_in_observed]
-        nodes_in_observed_values_data = [(self.network.values[node].index(value), len(self.network.values[node]))
-                                            for node, value in nodes_in_observed]
+        probs = np.hstack((self.probs[:,:-1].reshape((-1, self.nr_nodes)), prob_column))
 
-        nr_rows = len(self.probs)
-        bounds = [0, nr_rows]
-        for index, nr_values in nodes_in_observed_values_data:
-            nr_equal_values_in_column = nr_rows / nr_values
-            bounds[0] += index * nr_equal_values_in_column
-            bounds[1] -= (nr_values - index - 1) * nr_equal_values_in_column
-            nr_rows /= nr_values
+        return Factor(self.nodes, probs, self.network)
 
-        probs = self.probs[bounds[0] : bounds[1], len(nodes_in_observed):]
-
-        nodes = self.nodes[len(nodes_in_observed):]
-
-        return Factor(nodes, probs, self.network)
 
     def sort(self, nodes):
         nodes_columns_indices = np.flatnonzero(np.in1d(self.nodes, nodes))
@@ -112,11 +123,3 @@ class Factor():
         bounds_list = [[i * nr_equal_common_nodes_values_in_columns, (i + 1) * nr_equal_common_nodes_values_in_columns] for i in
                        xrange(nr_common_nodes_values_combinations)]
         return np.array([self.probs[bounds[0] : bounds[1], -1] for bounds in bounds_list]).astype(np.float)
-
-    def normalize(self):
-        prob_column = self.probs[:,-1].astype(np.float).reshape((-1, 1))
-        prob_column = prob_column / np.sum(prob_column)
-
-        probs = np.hstack((self.probs[:,:-1].reshape((-1, self.nr_nodes)), prob_column))
-
-        return Factor(self.nodes, probs, self.network)
