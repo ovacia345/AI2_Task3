@@ -34,7 +34,7 @@ class VariableElimination():
 
         result = Factor.product(factors)
 
-        return result.normalize()
+        return result.normalize(query)
 
     def _makeFactor(self, node, observed):
         nodes = np.array([node] + self.network.parents[node])

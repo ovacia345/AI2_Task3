@@ -19,12 +19,12 @@ class Factor():
         return factors[0]
 
     @staticmethod
-    def get_probs(factor1, factor2, prob_column, nr_common_nodes, nodes):
+    def get_probs(factor1, factor2, prob_column, nr_common_nodes):
         values1 = factor1.probs[:, :-1]  # Includes common_nodes columns
         values2 = factor2.probs[:, nr_common_nodes:-1]  # Excludes common_nodes columns
 
         if values1[:, nr_common_nodes:].size != 0 and values2.size != 0:
-            nr_rows = np.prod([len(factor1.network.values[node] for node in nodes)])
+            nr_rows = prob_column.size
 
             probs = [np.repeat(values1, nr_rows / len(values1), axis=0)]
             probs += [np.tile(values2.T, nr_rows / len(values2)).T]
@@ -73,7 +73,7 @@ class Factor():
         products = [[products1[i, e] * products2[i] for e in xrange(len(products1[0]))] for i in xrange(len(products1))]
         products = np.vstack([product.reshape((-1, 1)) for value_products in products for product in value_products])
 
-        probs = Factor.get_probs(self, factor, products, nr_common_nodes, nodes)
+        probs = Factor.get_probs(self, factor, products, nr_common_nodes)
 
         return Factor(nodes, probs, self.network)
 
@@ -92,7 +92,9 @@ class Factor():
 
         return Factor(self.nodes[1:], probs, self.network)
 
-    def normalize(self):
+    def normalize(self, query):
+        self.sort(query)
+
         prob_column = self.probs[:,-1].astype(np.float).reshape((-1, 1))
         prob_column = prob_column / np.sum(prob_column)
 
@@ -102,14 +104,13 @@ class Factor():
 
 
     def sort(self, nodes):
-        nodes_columns_indices = np.flatnonzero(np.in1d(self.nodes, nodes))
-
-        for i, index in enumerate(nodes_columns_indices):
+        for i, node in enumerate(nodes):
+            index = np.flatnonzero(self.nodes == node)[0]
             if i != index:
                 self.nodes[[i, index]] = self.nodes[[index, i]]
                 self.probs[:, [i, index]] = self.probs[:, [index, i]]
 
-        dtype = [(str(i), 'S10') for i in xrange(self.nr_nodes + 1)]
+        dtype = [(str(i), 'S10') for i in xrange(self.nr_nodes)] + [('prob', np.float)]
         self.probs = np.array(map(tuple, self.probs), dtype = dtype)
 
         self.probs = np.sort(self.probs, order = map(str, xrange(self.nr_nodes)))

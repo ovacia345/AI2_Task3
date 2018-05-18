@@ -1,3 +1,3 @@
 import numpy as np
 
-print(np.array(['true', 'true']) == np.array(['true', 'true']))
+float('9.293425e-1')
