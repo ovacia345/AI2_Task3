@@ -58,9 +58,9 @@ class VariableElimination():
         """
 
     ## Finished
-    def makeFactor(self, variable, observed):
-        nodes = np.array([variable] + self.network.parents[variable])
-        probs = self.network.probabilities[variable].values
+    def makeFactor(self, node, observed):
+        nodes = np.array([node] + self.network.parents[node])
+        probs = self.network.probabilities[node].values
 
         nodes_in_observed = nodes[np.flatnonzero(np.in1d(nodes, observed.keys()))]
         if nodes_in_observed.size > 0:
@@ -76,7 +76,7 @@ class VariableElimination():
 
 class Factor():
 
-    def __init__(self, nodes=np.array([]), probs = np.array([]), network = None):
+    def __init__(self, nodes = np.array([]), probs = np.array([]), network = None):
         self.nodes = nodes
         self.nr_nodes = self.nodes.size
 
@@ -86,28 +86,28 @@ class Factor():
 
     ## Finished
     def times(self, factor):
-        common_variables = np.intersect1d(self.nodes, factor.nodes)
-        nr_common_variables = len(common_variables)
-        nr_common_variables_values_combinations = np.prod([len(self.network.values[common_variable]) for common_variable in common_variables])
+        common_nodes = np.intersect1d(self.nodes, factor.nodes)
+        nr_common_nodes = common_nodes.size
+        nr_common_nodes_values_combinations = np.prod([len(self.network.values[common_node]) for common_node in common_nodes])
 
-        self.sort(common_variables)
-        factor.sort(common_variables)
+        self.sort(common_nodes)
+        factor.sort(common_nodes)
 
-        nodes = np.append(self.nodes, factor.nodes[nr_common_variables:])
+        nodes = np.append(self.nodes, factor.nodes[nr_common_nodes:])
 
-        products1 = self.probs_with_equal_common_variables(nr_common_variables_values_combinations)
-        products2 = factor.probs_with_equal_common_variables(nr_common_variables_values_combinations)
+        products1 = self.products_with_equal_common_nodes(nr_common_nodes_values_combinations)
+        products2 = factor.products_with_equal_common_nodes(nr_common_nodes_values_combinations)
         products = [[products1[i, e] * products2[i] for e in xrange(len(products1[0]))] for i in xrange(len(products1))]
         products = np.vstack([product.reshape((-1, 1)) for value_products in products for product in value_products])
 
-        probs = get_probs(self, factor, products, nr_common_variables, nodes)
+        probs = get_probs(self, factor, products, nr_common_nodes, nodes)
 
         return Factor(nodes, probs, self.network)
 
     ## Finished
-    def marginalize(self, variable):
-        self.sort([variable])
-        nr_values = len(self.network.values[variable])
+    def marginalize(self, node):
+        self.sort([node])
+        nr_values = len(self.network.values[node])
         nr_equal_values_in_column = len(self.probs) / nr_values
 
         indices_list = [[i * nr_equal_values_in_column + e for i in xrange(nr_values)] for e in xrange(nr_equal_values_in_column)]
@@ -120,14 +120,14 @@ class Factor():
 
         return Factor(self.nodes[1:], probs, self.network)
 
-    def reduce(self, observed_variables):
-        keys = observed_variables.keys()
+    def reduce(self, observed_nodes):
+        keys = observed_nodes.keys()
 
         self.sort(keys)
 
         for key in keys:
             values = np.array(self.network.values[key])
-            value_index = np.flatnonzero(values == observed_variables[key])[0]
+            value_index = np.flatnonzero(values == observed_nodes[key])[0]
             nr_equal_values_in_column = len(self.probs) / len(values)
             bounds = [value_index * nr_equal_values_in_column, (value_index + 1) * nr_equal_values_in_column]
 
@@ -137,10 +137,10 @@ class Factor():
         self.nr_nodes -= len(keys)
 
     ## Finished
-    def sort(self, variables):
-        variable_columns_indices = np.flatnonzero(np.in1d(self.nodes, variables))
+    def sort(self, nodes):
+        nodes_columns_indices = np.flatnonzero(np.in1d(self.nodes, nodes))
 
-        for i, index in enumerate(variable_columns_indices):
+        for i, index in enumerate(nodes_columns_indices):
             if i != index:
                 self.nodes[[i, index]] = self.nodes[[index, i]]
                 self.probs[:, [i, index]] = self.probs[:, [index, i]]
@@ -153,23 +153,23 @@ class Factor():
         self.probs = np.array(map(list, self.probs))
 
     ## Finished
-    def probs_with_equal_common_variables(self, nr_common_variables_values_combinations):
-        nr_equal_common_variables_values_in_columns = len(self.probs) / nr_common_variables_values_combinations
-        bounds_list = [[i * nr_equal_common_variables_values_in_columns, (i + 1) * nr_equal_common_variables_values_in_columns] for i in
-                       xrange(nr_common_variables_values_combinations)]
+    def products_with_equal_common_nodes(self, nr_common_nodes_values_combinations):
+        nr_equal_common_nodes_values_in_columns = len(self.probs) / nr_common_nodes_values_combinations
+        bounds_list = [[i * nr_equal_common_nodes_values_in_columns, (i + 1) * nr_equal_common_nodes_values_in_columns] for i in
+                       xrange(nr_common_nodes_values_combinations)]
         return np.array([self.probs[bounds[0] : bounds[1], -1] for bounds in bounds_list]).astype(np.float)
 
     ## Finished
-def get_probs(factor1, factor2, products, nr_common_variables, nodes):
-    values1 = factor1.probs[:, :-1] # Includes common_variables columns
-    values2 = factor2.probs[:, nr_common_variables:-1] # Excludes common_variables columns
+def get_probs(factor1, factor2, products, nr_common_nodes, nodes):
+    values1 = factor1.probs[:, :-1] # Includes common_nodes columns
+    values2 = factor2.probs[:, nr_common_nodes:-1] # Excludes common_nodes columns
 
-    if values1[:, nr_common_variables:].size != 0 and values2.size != 0:
+    if values1[:, nr_common_nodes:].size != 0 and values2.size != 0:
         nr_rows = np.prod([len(factor1.network.values[node] for node in nodes)])
 
         probs = [np.repeat(values1, nr_rows / len(values1), axis=0)]
         probs += [np.tile(values2.T, nr_rows / len(values2)).T]
-    elif values1[:, nr_common_variables:].size != 0:
+    elif values1[:, nr_common_nodes:].size != 0:
         probs = [values1]
     elif values2.size != 0:
         probs = [np.repeat(values1, len(values2) / len(values1), axis=0)]
