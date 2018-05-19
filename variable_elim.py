@@ -23,8 +23,9 @@ class VariableElimination():
 
         for node in elim_order:
             node_factors_indices = [i for i, factor in enumerate(factors) if node in factor.nodes]
+            node_factors = factors[node_factors_indices]
 
-            product = Factor.product(factors[node_factors_indices])
+            product = Factor.product(node_factors)
 
             marginalization = product.marginalize(node)
 
@@ -44,7 +45,7 @@ class VariableElimination():
         if nodes_in_observed.size > 0:
             if nodes.size > nodes_in_observed.size:
                 factor = Factor(nodes, probs, self.network)
-                return factor.reduce(observed, nodes_in_observed)
+                return factor.reduce(nodes_in_observed, observed)
             else:
                 return Factor()
         else:

@@ -38,7 +38,7 @@ class Factor():
         return np.hstack(probs)
 
 
-    def reduce(self, observed, nodes_in_observed):
+    def reduce(self, nodes_in_observed, observed):
         self.sort(nodes_in_observed)
 
         nodes_in_observed = [(node, observed[node]) for node in nodes_in_observed]
