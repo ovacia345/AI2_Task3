@@ -41,7 +41,7 @@ class VariableElimination():
         nodes = np.array([node] + self.network.parents[node])
         probs = self.network.probabilities[node].values
 
-        nodes_in_observed = nodes[np.flatnonzero(np.in1d(nodes, observed.keys()))]
+        nodes_in_observed = nodes[np.in1d(nodes, observed.keys())]
         if nodes_in_observed.size > 0:
             if nodes.size > nodes_in_observed.size:
                 factor = Factor(nodes, probs, self.network)

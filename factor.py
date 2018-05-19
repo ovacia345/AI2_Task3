@@ -23,13 +23,13 @@ class Factor():
         values1 = factor1.probs[:, :-1]  # Includes common_nodes columns
         values2 = factor2.probs[:, nr_common_nodes:-1]  # Excludes common_nodes columns
 
-        if values1[:, nr_common_nodes:].size != 0 and values2.size != 0:
+        if values1[:, nr_common_nodes:].size > 0 and values2.size > 0:
             nr_rows = prob_column.size
 
-            probs = [np.repeat(values1, nr_rows / len(values1), axis=0)]
-            probs += [np.tile(values2.T, nr_rows / len(values2)).T]
-        elif values2.size != 0:
-            probs = [np.repeat(values1, len(values2) / len(values1), axis=0)]
+            probs = [np.repeat(values1, nr_rows / values1.shape[0], axis=0)]
+            probs += [np.tile(values2.T, nr_rows / values2.shape[0]).T]
+        elif values2.size > 0:
+            probs = [np.repeat(values1, values2.shape[0] / values1.shape[0], axis=0)]
             probs += [values2]
         else:
             probs = [values1]
@@ -70,8 +70,9 @@ class Factor():
 
         products1 = self.products_with_equal_common_nodes(nr_common_nodes_values_combinations)
         products2 = factor.products_with_equal_common_nodes(nr_common_nodes_values_combinations)
-        products = [[products1[i, e] * products2[i] for e in xrange(len(products1[0]))] for i in xrange(len(products1))]
-        products = np.vstack([product.reshape((-1, 1)) for value_products in products for product in value_products])
+        products_list = [[products1[i, e] * products2[i] for e in xrange(products1.shape[1])] for i in xrange(products1.shape[0])]
+        products_columns = [product.reshape((-1, 1)) for products in products_list for product in products]
+        products = np.vstack(products_columns)
 
         probs = Factor.get_probs(self, factor, products, nr_common_nodes)
 
@@ -80,10 +81,11 @@ class Factor():
     def marginalize(self, node):
         self.sort([node])
         nr_values = len(self.network.values[node])
-        nr_equal_values_in_column = len(self.probs) / nr_values
+        nr_equal_values_in_column = self.probs.shape[0] / nr_values
 
         indices_list = [[i * nr_equal_values_in_column + e for i in xrange(nr_values)] for e in xrange(nr_equal_values_in_column)]
-        sums = np.array([self.probs[indices, -1] for indices in indices_list]).astype(np.float)
+        sums_list = [self.probs[indices, -1] for indices in indices_list]
+        sums = np.array(sums_list).astype(np.float)
         sums = np.sum(sums, axis = 1).reshape((-1, 1))
 
         values = self.probs[:nr_equal_values_in_column, 1:-1]
@@ -118,7 +120,8 @@ class Factor():
         self.probs = np.array(map(list, self.probs))
 
     def products_with_equal_common_nodes(self, nr_common_nodes_values_combinations):
-        nr_equal_common_nodes_values_in_columns = len(self.probs) / nr_common_nodes_values_combinations
+        nr_equal_common_nodes_values_in_columns = self.probs.shape[0] / nr_common_nodes_values_combinations
         bounds_list = [[i * nr_equal_common_nodes_values_in_columns, (i + 1) * nr_equal_common_nodes_values_in_columns] for i in
                        xrange(nr_common_nodes_values_combinations)]
-        return np.array([self.probs[bounds[0] : bounds[1], -1] for bounds in bounds_list]).astype(np.float)
+        products = [self.probs[bounds[0]:bounds[1], -1] for bounds in bounds_list]
+        return np.array(products).astype(np.float)
