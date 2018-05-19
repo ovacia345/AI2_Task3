@@ -24,16 +24,16 @@ if __name__ == '__main__':
     ve = VariableElimination(net)
 
     # If variables are known beforehand, you can represent them in the following way:
-    evidence = {'Sick': 'no'}
+    evidence = {'Sick': 'no', 'CO2Report': '<7.5', 'Grunting': 'yes'}
 
     # determine you heuristics before you call the run function. This can be done in this file or in a seperate file
     # The heuristics either specifying the elimination ordering (list) or it is a function that determines the elimination ordering
     # given the network. An simple example is:
-    query = ['ChestXray', 'Age']
-    elim_order = ['CardiacMixing', 'RUQO2', 'CO2', 'BirthAsphyxia',
-                  'LVHreport', 'LowerBodyO2', 'DuctFlow', 'HypoxiaInO2', 'Grunting',
-                  'XrayReport', 'LungFlow', 'HypDistrib', 'LungParench', 'CO2Report',
-                  'LVH', 'GruntingReport', 'Disease']
+    query = ['Age']
+    elim_order = ['XrayReport', 'LungFlow', 'HypDistrib', 'LungParench',
+                  'LVHreport', 'LowerBodyO2', 'DuctFlow', 'HypoxiaInO2',
+                  'LVH', 'GruntingReport', 'Disease', 'ChestXray',
+                  'CardiacMixing', 'RUQO2', 'CO2', 'BirthAsphyxia']
 
 
     #call the elimination ordering function for example as follows:
