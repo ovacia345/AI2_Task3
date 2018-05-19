@@ -46,8 +46,9 @@ class Factor():
                                          for node, value in nodes_in_observed]
 
         nr_rows = self.probs.shape[0]
-        nr_rows_list = [nr_rows]
-        nr_rows_list = [nr_rows_list[i] / nr_values for i, (_, nr_values) in enumerate(nodes_in_observed_values_data)]
+        nr_rows_list = [nr_rows]*len(nodes_in_observed)
+        for i, (_, nr_values) in enumerate(nodes_in_observed_values_data):
+            nr_rows_list[i:] = [nr_rows_list[i] / nr_values]*len(nr_rows_list[i:])
 
         bounds = [np.sum([index * nr_rows_list[i] for i, (index, _) in enumerate(nodes_in_observed_values_data)])]
         bounds += [nr_rows - np.sum([(nr_values - (index + 1)) * nr_rows_list[i] for i, (index, nr_values) in enumerate(nodes_in_observed_values_data)])]
