@@ -29,7 +29,8 @@ class VariableElimination():
 
             marginalization = product.marginalize(node)
 
-            factors = np.append(factors, marginalization)
+            if marginalization.nr_nodes > 0:
+                factors = np.append(factors, marginalization)
             factors = np.delete(factors, node_factors_indices)
 
 
