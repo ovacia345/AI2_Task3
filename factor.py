@@ -104,7 +104,7 @@ class Factor():
         return Factor(self.nodes[1:], probs, self.network)
 
     def normalize(self, query):
-        self.sort(query)
+        self.sort([query])
 
         values = self.probs[:, :-1].reshape((-1, self.nr_nodes))
 

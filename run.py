@@ -6,6 +6,7 @@ Entry point for testing the variable elimination algorithm
 """
 from read_bayesnet import BayesNet
 from variable_elim import *
+from heuristics import *
 
 if __name__ == '__main__':
     # the class BayesNet represents a Bayesian network from a .bif file
@@ -29,12 +30,8 @@ if __name__ == '__main__':
     # determine you heuristics before you call the run function. This can be done in this file or in a seperate file
     # The heuristics either specifying the elimination ordering (list) or it is a function that determines the elimination ordering
     # given the network. An simple example is:
-    query = ['Age']
-    elim_order = ['XrayReport', 'LungFlow', 'HypDistrib', 'LungParench',
-                  'LVHreport', 'LowerBodyO2', 'DuctFlow', 'HypoxiaInO2',
-                  'LVH', 'GruntingReport', 'Disease', 'ChestXray',
-                  'CardiacMixing', 'RUQO2', 'CO2', 'BirthAsphyxia']
-
+    query = 'Age'
+    elim_order = chooseHeuristic(net, evidence, query, 'least-incoming-arcs first')
 
     #call the elimination ordering function for example as follows:
     result = ve.run(query, evidence, elim_order)
