@@ -7,6 +7,7 @@ Entry point for testing the variable elimination algorithm
 from read_bayesnet import BayesNet
 from variable_elim import *
 from heuristics import *
+import datetime
 
 if __name__ == '__main__':
     # the class BayesNet represents a Bayesian network from a .bif file
@@ -37,10 +38,12 @@ if __name__ == '__main__':
     result = ve.run(query, evidence, elim_order)
 
     print "\nResult:"
-    print "Query", query
-    print "Evidence", evidence
-    print "Probabilities"
-    print result.probs
+    print("Query: " + query)
+    print("Evidence: " + str(evidence))
+    print("Probabilities: \n" + str(result.probs))
+
+    time_diff = datetime.datetime.now() - ve.start_time
+    print("\nWall clock time: " + str(time_diff))
 
 
  
