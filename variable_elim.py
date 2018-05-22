@@ -6,6 +6,7 @@ Implementation of the variable elimination algorithm for AISPAML assignment 3
 """
 import numpy as np
 from factor import Factor
+import datetime
 
 class VariableElimination():
 
@@ -15,6 +16,8 @@ class VariableElimination():
 
 
     def run(self, query, observed, elim_order):
+        self.start_time = datetime.datetime.now()
+
         factors = np.array([])
         for node in self.network.nodes:
             factor = self._makeFactor(node, observed)
