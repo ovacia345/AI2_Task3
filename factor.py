@@ -1,5 +1,8 @@
 import numpy as np
 
+# values: the values of the nodes, e.g. 'no' or 'yes'.
+# prob_column / products / sums: the column of probabilities.
+# probs: the array where values and prob_column are combined.
 class Factor():
 
     def __init__(self, nodes = np.array([]), probs = np.array([]), network = None):
@@ -7,6 +10,7 @@ class Factor():
         self.nr_nodes = self.nodes.size
 
         self.probs = probs
+        self.nr_rows = self.probs.shape[0]
 
         self.network = network
 
@@ -15,7 +19,7 @@ class Factor():
     def product(factors):
         for i in xrange(factors.size - 1):
             factors[1] = factors[0].times(factors[1])
-            factors = np.delete(factors, 0)
+            factors = factors[1:]
         return factors[0]
 
     # When doing factor multiplication, the resulting factor might have more nodes.
@@ -28,10 +32,10 @@ class Factor():
         if factor1.nr_nodes > nr_common_nodes and factor2.nr_nodes > nr_common_nodes:
             nr_rows = prob_column.size
 
-            probs = [np.repeat(values1, nr_rows / values1.shape[0], axis=0)]
-            probs += [np.tile(values2.T, nr_rows / values2.shape[0]).T]
+            probs = [np.repeat(values1, nr_rows / factor1.nr_rows, axis=0)]
+            probs += [np.tile(values2.T, nr_rows / factor2.nr_rows).T]
         elif factor2.nr_nodes > nr_common_nodes:
-            probs = [np.repeat(values1, values2.shape[0] / values1.shape[0], axis=0)]
+            probs = [np.repeat(values1, factor2.nr_rows / factor1.nr_rows, axis=0)]
             probs += [values2]
         else:
             probs = [values1]
@@ -52,7 +56,7 @@ class Factor():
                                          for node, value in nodes_in_observed]
                                          # List of tuples (index of value in values, number of values)
 
-        nr_rows = self.probs.shape[0]
+        nr_rows = self.nr_rows
         bounds = [0, nr_rows]
         for index, nr_values in nodes_in_observed_values_data:
             nr_rows /= nr_values
@@ -78,7 +82,7 @@ class Factor():
         products1 = self.products_with_equal_common_nodes(nr_common_nodes_values_combinations)
         products2 = factor.products_with_equal_common_nodes(nr_common_nodes_values_combinations)
         products_list = [[products1[i, e] * products2[i] for e in xrange(products1.shape[1])]
-                         for i in xrange(products1.shape[0])]
+                         for i in xrange(nr_common_nodes_values_combinations)]
         products_columns = [product.reshape((-1, 1)) for products in products_list for product in products]
         products = np.vstack(products_columns)
 
@@ -89,7 +93,7 @@ class Factor():
     def marginalize(self, node):
         self.sort([node])
         nr_values = len(self.network.values[node])
-        nr_equal_values_in_column = self.probs.shape[0] / nr_values
+        nr_equal_values_in_column = self.nr_rows / nr_values
 
         values = self.probs[:nr_equal_values_in_column, 1:-1]
 
@@ -134,7 +138,7 @@ class Factor():
 
     # This function returns the parts that will be multiplied in the times function.
     def products_with_equal_common_nodes(self, nr_common_nodes_values_combinations):
-        nr_equal_common_nodes_values = self.probs.shape[0] / nr_common_nodes_values_combinations
+        nr_equal_common_nodes_values = self.nr_rows / nr_common_nodes_values_combinations
         bounds_list = [[i * nr_equal_common_nodes_values, (i + 1) * nr_equal_common_nodes_values]
                        for i in xrange(nr_common_nodes_values_combinations)]
         products = [self.probs[bounds[0]:bounds[1], -1] for bounds in bounds_list]
