@@ -1,5 +1,16 @@
 import numpy as np
-from collections import defaultdict
+
+def no_heuristic(network, evidence, query):
+    weights = {node: 1 for node in network.nodes}
+
+    return get_elim_order(weights, evidence, query)
+
+def min_parents(network, evidence, query):
+    nr_parents = {node: 0 for node in network.nodes}
+    for node in network.nodes:
+        nr_parents[node] += len(network.parents[node])
+
+    return get_elim_order(nr_parents, evidence, query)
 
 def min_neighbours(network, evidence, query):
     nr_neighbours = {node: 0 for node in network.nodes}
@@ -8,24 +19,22 @@ def min_neighbours(network, evidence, query):
             nr_neighbours[node] += 1
             nr_neighbours[parent] += 1
 
-    for key in evidence.keys():
-        nr_neighbours.pop(key)
-    nr_neighbours.pop(query)
-    indices = np.argsort(nr_neighbours.values())
-    elim_order = np.array(nr_neighbours.keys())[indices]
-    return elim_order
+    return get_elim_order(nr_neighbours, evidence, query)
 
 def min_weight(network, evidence, query):
-    neighbours_weights = {node: [] for node in network.nodes}
+    weights = {node: 1 for node in network.nodes}
     for node in network.nodes:
         for parent in network.parents[node]:
-            neighbours_weights[node] += [len(network.values[parent])]
-            neighbours_weights[parent] += [len(network.values[node])]
+            weights[node] *= len(network.values[parent])
+            weights[parent] *= len(network.values[node])
 
+    return get_elim_order(weights, evidence, query)
+
+def get_elim_order(weights, evidence, query):
     for key in evidence.keys():
-        neighbours_weights.pop(key)
-    neighbours_weights.pop(query)
-    neighbours_weights_products = [np.prod(neighbours_weights[node]) for node in neighbours_weights.keys()]
-    indices = np.argsort(neighbours_weights_products)
-    elim_order = np.array(neighbours_weights.keys())[indices]
+        weights.pop(key)
+    weights.pop(query)
+
+    indices = np.argsort(weights.values())
+    elim_order = np.array(weights.keys())[indices]
     return elim_order
