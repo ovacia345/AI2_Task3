@@ -7,6 +7,7 @@ Implementation of the variable elimination algorithm for AISPAML assignment 3
 import numpy as np
 from factor import Factor
 import datetime
+from heuristics import *
 
 class VariableElimination():
 
