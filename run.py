@@ -32,7 +32,7 @@ if __name__ == '__main__':
     # The heuristics either specifying the elimination ordering (list) or it is a function that determines the elimination ordering
     # given the network. An simple example is:
     query = 'Age'
-    elim_order = chooseHeuristic(net, evidence, query, 'least-incoming-arcs first')
+    elim_order = min_neighbours(net, evidence, query)
 
     #call the elimination ordering function for example as follows:
     result = ve.run(query, evidence, elim_order)
