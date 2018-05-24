@@ -33,6 +33,11 @@ def min_weight(network, evidence, query):
 
     return get_elim_order(weights, evidence, query)
 
+def random(network, evidence, query):
+    weights = {node: np.random.rand() for node in network.nodes}
+
+    return get_elim_order(weights, evidence, query)
+
 def get_elim_order(weights, evidence, query):
     for key in evidence.keys():
         weights.pop(key)
