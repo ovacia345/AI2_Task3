@@ -15,9 +15,11 @@ class VariableElimination():
         self.network = network
         self.network.values = {node: sorted(self.network.values[node]) for node in self.network.values}
 
+        self.wall_clock_time = 0
+
 
     def run(self, query, observed, elim_order):
-        self.start_time = datetime.datetime.now()
+        self.wall_clock_time = datetime.datetime.now()
 
         factors = np.array([])
         for node in self.network.nodes:
@@ -39,8 +41,11 @@ class VariableElimination():
 
 
         result = Factor.product(factors)
+        result = result.normalizse(query)
 
-        return result.normalize(query)
+        self.wall_clock_time -= datetime.datetime.now()
+
+        return result
 
     def _makeFactor(self, node, observed):
         nodes = np.array([node] + self.network.parents[node])
