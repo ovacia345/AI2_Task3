@@ -17,10 +17,11 @@ class Factor():
     # This function computes the product of all the factors in the factors parameter.
     @staticmethod
     def product(factors):
-        for i in xrange(factors.size - 1):
+        nr_multiplication_steps = factors.size - 1
+        for i in xrange(nr_multiplication_steps):
             factors[1] = factors[0].times(factors[1])
-            factors = factors[1:]
-        return factors[0]
+            np.delete(factors, 0)
+        return factors[0], nr_multiplication_steps
 
     # When doing factor multiplication, the resulting factor might have more nodes.
     # This function returns the probs of such a bigger factor.

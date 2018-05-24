@@ -17,6 +17,8 @@ class VariableElimination():
 
         self.wall_clock_time = 0
 
+        self.nr_multiplication_steps = 0
+
 
     def run(self, query, observed, elim_order):
         self.wall_clock_time = datetime.datetime.now()
@@ -31,7 +33,9 @@ class VariableElimination():
             node_factors_indices = [i for i, factor in enumerate(factors) if node in factor.nodes]
             node_factors = factors[node_factors_indices]
 
-            product = Factor.product(node_factors)
+            product, nr_multiplication_steps = Factor.product(node_factors)
+
+            self.nr_multiplication_steps += nr_multiplication_steps
 
             if product.nr_nodes > 1:
                 marginalization = product.marginalize(node)
