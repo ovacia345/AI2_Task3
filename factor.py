@@ -20,7 +20,7 @@ class Factor():
         nr_multiplication_steps = factors.size - 1
         for i in xrange(nr_multiplication_steps):
             factors[1] = factors[0].times(factors[1])
-            np.delete(factors, 0)
+            factors = np.delete(factors, 0)
         return factors[0], nr_multiplication_steps
 
     # When doing factor multiplication, the resulting factor might have more nodes.

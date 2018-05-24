@@ -41,9 +41,8 @@ if __name__ == '__main__':
     print("Query: " + query)
     print("Evidence: " + str(evidence))
     print("Probabilities: \n" + str(result.probs))
-
-    time_diff = datetime.datetime.now() - ve.start_time
-    print("\nWall clock time: " + str(time_diff))
+    print("\nWall clock time: " + str(ve.wall_clock_time))
+    print("Number of multiplication steps: " + str(ve.nr_multiplication_steps))
 
 
  

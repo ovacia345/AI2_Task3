@@ -44,10 +44,11 @@ class VariableElimination():
             factors = np.delete(factors, node_factors_indices)
 
 
-        result = Factor.product(factors)
-        result = result.normalizse(query)
+        result, nr_multiplication_steps = Factor.product(factors)
+        result = result.normalize(query)
 
-        self.wall_clock_time -= datetime.datetime.now()
+        self.wall_clock_time = datetime.datetime.now() - self.wall_clock_time
+        self.nr_multiplication_steps += nr_multiplication_steps
 
         return result
 
