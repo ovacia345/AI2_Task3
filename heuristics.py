@@ -1,9 +1,12 @@
 import numpy as np
 
-def no_heuristic(network, evidence, query):
-    weights = {node: 1 for node in network.nodes}
+def min_children(network, evidence, query):
+    nr_children = {node: 0 for node in network.nodes}
+    for node in network.nodes:
+        for parent in network.parents[node]:
+            nr_children[parent] += 1
 
-    return get_elim_order(weights, evidence, query)
+    return get_elim_order(nr_children, evidence, query)
 
 def min_parents(network, evidence, query):
     nr_parents = {node: 0 for node in network.nodes}
