@@ -80,8 +80,8 @@ class Factor():
 
         nodes = np.append(self.nodes, factor.nodes[nr_common_nodes:])
 
-        products1 = self.products_with_equal_common_nodes(nr_common_nodes_values_combinations)
-        products2 = factor.products_with_equal_common_nodes(nr_common_nodes_values_combinations)
+        products1 = self.probabilities_with_equal_common_nodes(nr_common_nodes_values_combinations)
+        products2 = factor.probabilities_with_equal_common_nodes(nr_common_nodes_values_combinations)
         products_list = [[products1[i, e] * products2[i] for e in xrange(products1.shape[1])]
                          for i in xrange(nr_common_nodes_values_combinations)]
         products_columns = [product.reshape((-1, 1)) for products in products_list for product in products]
@@ -138,7 +138,7 @@ class Factor():
         self.probs = np.array(map(list, self.probs))
 
     # This function returns the parts that will be multiplied in the times function.
-    def products_with_equal_common_nodes(self, nr_common_nodes_values_combinations):
+    def probabilities_with_equal_common_nodes(self, nr_common_nodes_values_combinations):
         nr_equal_common_nodes_values = self.nr_rows / nr_common_nodes_values_combinations
         bounds_list = [[i * nr_equal_common_nodes_values, (i + 1) * nr_equal_common_nodes_values]
                        for i in xrange(nr_common_nodes_values_combinations)]
