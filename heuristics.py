@@ -39,7 +39,7 @@ def random(network, evidence, query):
     return get_elim_order(weights, evidence, query)
 
 def get_elim_order(weights, evidence, query):
-    if query not in weights.keys() or any(
+    if query in evidence.keys() or query not in weights.keys() or any(
             e not in weights.keys() for e in evidence.keys()):
         raise ValueError("Invalid key encountered")
 
