@@ -7,7 +7,6 @@ Implementation of the variable elimination algorithm for AISPAML assignment 3
 import numpy as np
 from factor import Factor
 import datetime
-from heuristics import *
 
 class VariableElimination():
 
@@ -78,13 +77,12 @@ class VariableElimination():
         if nodes_in_observed.size > 0:
             if nodes.size > nodes_in_observed.size:
                 factor = Factor(nodes, probs, self.network)
-                factor_reduced = factor.reduce(nodes_in_observed, observed)
 
                 log.write("\nReduce\n")
                 log.write(str(factor))
                 log.write("Evidence: " + str(observed) + "\n\n")
 
-                return factor_reduced
+                return factor.reduce(nodes_in_observed, observed)
             else:
                 return Factor()
         else:
