@@ -14,6 +14,11 @@ class Factor():
 
         self.network = network
 
+    def __str__(self):
+        string = "Nodes: " + str(self.nodes) + "\n"
+        string += "Probabilities:\n" + str(self.probs) + "\n"
+        return string
+
     # This function computes the product of all the factors in the factors parameter.
     @staticmethod
     def product(factors):
