@@ -1,0 +1,8 @@
+network edge_case {
+}
+variable A {
+  type discrete [ 2 ] { True, False };
+}
+probability ( A ) {
+  table 0.9, 0.1;
+}
