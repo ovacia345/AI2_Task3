@@ -35,8 +35,6 @@ if __name__ == '__main__':
     if any(evidence[e] not in net.values[e] for e in evidence.keys()):
         raise ValueError("Invalid evidence value encountered.")
 
-
-
     log = open("log.txt", "w")
     log.write("Query: " + query + "\n")
     log.write("Evidence: " + str(evidence) + "\n")
